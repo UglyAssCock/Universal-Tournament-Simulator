@@ -1407,6 +1407,7 @@ private object TournamentBuilderEngine {
 // ============================================================================
 // MAIN JETPACK COMPOSE APPLICATION SHELL & ALL 5 NAVIGATION SECTIONS
 // ============================================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UniversalTournamentSimulatorApp() {
     val context = LocalContext.current
@@ -1566,8 +1567,9 @@ private fun UniversalTournamentSimulatorApp() {
 }
 
 // ============================================================================
-// 1. HOME DASHBOARD SCREEN (QUICK SIM, GAME MODES, SAVED TOURNAMENTS)
+// 1. HOME DASHBOARD SCREEN
 // ============================================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeDashboardScreen(
     allTeams: List<UtsTeam>,
@@ -1632,7 +1634,6 @@ private fun HomeDashboardScreen(
             }
         }
 
-        // QUICK MATCH ENGINE CARD
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = CardBg),
@@ -1729,7 +1730,6 @@ private fun HomeDashboardScreen(
             }
         }
 
-        // SPECIAL GAME MODES LAUNCHER
         item {
             Text("SPECIAL GAME MODES", color = TextWhite, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             Spacer(Modifier.height(8.dp))
@@ -1778,7 +1778,6 @@ private fun HomeDashboardScreen(
             }
         }
 
-        // CONTINUE SAVED TOURNAMENTS
         item {
             Text(
                 "SAVED & RECENT TOURNAMENTS (${savedTournaments.size})",
@@ -1831,18 +1830,18 @@ private fun HomeDashboardScreen(
 }
 
 // ============================================================================
-// 2. INTERNATIONAL SECTION (WORLD CUPS 1930-2026, CONFEDERATIONS, + CREATOR)
+// 2. INTERNATIONAL SECTION
 // ============================================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InternationalSectionScreen(
     allTeams: List<UtsTeam>,
     onLaunchTournament: (ActiveTournamentState) -> Unit
 ) {
-    var subTab by remember { mutableStateOf(0) } // 0: World Cups Archive, 1: FIFA Nations Database, 2: Custom World Cup Creator
+    var subTab by remember { mutableStateOf(0) }
     var selectedWcFilter by remember { mutableStateOf("Men's WC") }
     var selectedConfFilter by remember { mutableStateOf("ALL") }
 
-    // Custom World Cup Creator State
     var customWcName by remember { mutableStateOf("2030 FIFA Centennial World Cup") }
     var customWcHost by remember { mutableStateOf("Morocco, Spain & Portugal") }
     var customWcYear by remember { mutableStateOf(2030) }
@@ -1916,8 +1915,8 @@ private fun InternationalSectionScreen(
                                         Text("Host: ${wc.host}", color = AccentBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     }
                                     Spacer(Modifier.height(6.dp))
-                                    Text("🏆 Champion: ${wc.champion}  |  🥈 Runner-Up: ${wc.runnerUp}", color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                    Text("🥉 Third Place: ${wc.thirdPlace}  |  Final: ${wc.finalScore}", color = TextSecondary, fontSize = 12.sp)
+                                    Text("🏆 Champion: ${wc.champion}  •  🥈 Runner-Up: ${wc.runnerUp}", color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("🥉 Third Place: ${wc.thirdPlace}  •  Final: ${wc.finalScore}", color = TextSecondary, fontSize = 12.sp)
                                     Text("📊 ${wc.teamsCount} Teams • ${wc.matchesPlayed} Matches • ${wc.totalGoals} Goals • Top Scorer: ${wc.topScorer}", color = TextSecondary, fontSize = 11.sp)
                                     wc.summaryGroups.forEach { gLine ->
                                         Text("• $gLine", color = AccentGreen, fontSize = 11.sp)
@@ -1961,7 +1960,8 @@ private fun InternationalSectionScreen(
                     }
                     Spacer(Modifier.height(8.dp))
                     val nations = allTeams.filter {
-                        it.isNational && (selectedConfFilter == "ALL" || it.confederation == selectedConfFilter)
+                        val matchesConf = (selectedConfFilter == "ALL") or (it.confederation == selectedConfFilter)
+                        it.isNational && matchesConf
                     }.sortedByDescending { it.overall }
 
                     Text("Showing ${nations.size} National Teams", color = AccentGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -2075,14 +2075,15 @@ private fun InternationalSectionScreen(
 }
 
 // ============================================================================
-// 3. CLUBS SECTION (CONTINENTAL SEASONS, NATIONAL LEAGUES, + CUSTOM LEAGUE)
+// 3. CLUBS SECTION
 // ============================================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ClubsSectionScreen(
     allTeams: List<UtsTeam>,
     onLaunchTournament: (ActiveTournamentState) -> Unit
 ) {
-    var clubTab by remember { mutableStateOf(0) } // 0: Continental Seasons, 1: National Leagues, 2: + Custom Club League
+    var clubTab by remember { mutableStateOf(0) }
     var customLeagueName by remember { mutableStateOf("World Super League") }
     var customLeagueSize by remember { mutableStateOf(16) }
 
@@ -2121,15 +2122,16 @@ private fun ClubsSectionScreen(
                                 }
                                 Text("Format: ${s.format}", color = TextSecondary, fontSize = 11.sp)
                                 Spacer(Modifier.height(4.dp))
-                                Text("🏆 Winner: ${s.champion}  |  🥈 Runner-up: ${s.runnerUp}", color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                Text("🏆 Winner: ${s.champion}  •  🥈 Runner-up: ${s.runnerUp}", color = TextWhite, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                 Text("Final: ${s.finalScore}  •  Venue: ${s.venue}", color = TextSecondary, fontSize = 12.sp)
                                 Text("Clubs: ${s.notableClubs.joinToString(", ")}", color = AccentBlue, fontSize = 11.sp)
                                 Spacer(Modifier.height(8.dp))
                                 Button(
                                     onClick = {
-                                        val confClubs = allTeams.filter { !it.isNational && (it.confederation == s.confederation || s.confederation == "UEFA") }
-                                            .sortedByDescending { it.overall }
-                                            .take(16)
+                                        val confClubs = allTeams.filter {
+                                            val sameConf = (it.confederation == s.confederation) or (it.confederation == "UEFA")
+                                            !it.isNational && sameConf
+                                        }.sortedByDescending { it.overall }.take(16)
                                         val tr = TournamentBuilderEngine.generateWorldCupWithQualification(
                                             name = "${s.competitionName} ${s.seasonYear}",
                                             year = 2026,
@@ -2241,8 +2243,9 @@ private fun ClubsSectionScreen(
 }
 
 // ============================================================================
-// 4. SEASON MODE (MULTI-DIVISION PYRAMIDS, PROMOTION/RELEGATION, DYNAMIC OVR)
+// 4. SEASON MODE
 // ============================================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SeasonModeScreen(
     seasonYear: String,
@@ -2294,7 +2297,6 @@ private fun SeasonModeScreen(
                 val summaryBuilder = StringBuilder()
 
                 val newSystems = systems.map { sys ->
-                    // 1. Simulate full double round-robin in every division
                     val simulatedDivs = sys.divisions.map { div ->
                         val matches = mutableListOf<SimulatedMatchResult>()
                         val mutableTeams = div.teams.toMutableList()
@@ -2324,7 +2326,6 @@ private fun SeasonModeScreen(
                         )
                     }.toMutableList()
 
-                    // 2. Simulate Domestic Cup across all divisions in country
                     val allCountryClubs = simulatedDivs.flatMap { it.teams }.shuffled()
                     val cupMatches = mutableListOf<SimulatedMatchResult>()
                     var cupPool = allCountryClubs.take(16)
@@ -2344,7 +2345,6 @@ private fun SeasonModeScreen(
                     }
                     val cupChamp = cupPool.firstOrNull()
 
-                    // 3. Promotion & Relegation between adjacent divisions
                     for (dIdx in 0 until simulatedDivs.size - 1) {
                         val upper = simulatedDivs[dIdx]
                         val lower = simulatedDivs[dIdx + 1]
@@ -2352,7 +2352,7 @@ private fun SeasonModeScreen(
                         val promoted = lower.standings.take(2).map { it.team }
 
                         if (sys.country == currentSystem.country) {
-                            summaryBuilder.appendLine("${sys.country}: ⬆️ Promoted to ${upper.divisionName}: ${promoted.joinToString { it.name }} | ⬇️ Relegated: ${relegated.joinToString { it.name }}")
+                            summaryBuilder.appendLine("${sys.country}: Promoted to ${upper.divisionName}: ${promoted.joinToString { it.name }} • Relegated: ${relegated.joinToString { it.name }}")
                         }
 
                         val newUpperTeams = (upper.teams.filter { u -> relegated.none { it.id == u.id } } +
@@ -2432,8 +2432,9 @@ private fun SeasonModeScreen(
 }
 
 // ============================================================================
-// 5. MORE SECTION (TEAM EDITOR + LOGO PICKER, UNIVERSAL 12-SPORT CREATOR, JSON)
+// 5. MORE SECTION
 // ============================================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MoreSectionScreen(
     allTeams: List<UtsTeam>,
@@ -2442,9 +2443,8 @@ private fun MoreSectionScreen(
     onLaunchTournament: (ActiveTournamentState) -> Unit
 ) {
     val context = LocalContext.current
-    var moreSubTab by remember { mutableStateOf(0) } // 0: Team Editor, 1: 12-Sport Universal Creator, 2: Import/Export & Stats
+    var moreSubTab by remember { mutableStateOf(0) }
 
-    // Team Editor State
     var searchQuery by remember { mutableStateOf("") }
     var editingTeam by remember { mutableStateOf<UtsTeam?>(null) }
     var newTeamName by remember { mutableStateOf("") }
@@ -2463,7 +2463,6 @@ private fun MoreSectionScreen(
         }
     }
 
-    // Universal Multi-Sport Creator State
     var selectedSport by remember { mutableStateOf(SportType.BASKETBALL) }
     var universalTourneyName by remember { mutableStateOf("Global Championship") }
     var universalSize by remember { mutableStateOf(16) }
@@ -2510,7 +2509,7 @@ private fun MoreSectionScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
-                        Text("Overall: ${newTeamOvr.toInt()} | Attack: ${newTeamAtt.toInt()} | Defense: ${newTeamDef.toInt()}", color = TextWhite, fontSize = 12.sp)
+                        Text("Overall: ${newTeamOvr.toInt()} • Attack: ${newTeamAtt.toInt()} • Defense: ${newTeamDef.toInt()}", color = TextWhite, fontSize = 12.sp)
                         Slider(value = newTeamOvr, onValueChange = { newTeamOvr = it; newTeamAtt = it; newTeamDef = it }, valueRange = 1f..99f)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(onClick = { logoPickerLauncher.launch("image/*") }) {
@@ -2567,13 +2566,16 @@ private fun MoreSectionScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text("Search ${allTeams.size} Teams to Edit/Duplicate/Delete") },
+                    label = { Text("Search ${allTeams.size} Teams to Edit or Delete") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(6.dp))
 
                 val filtered = allTeams.filter {
-                    searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) || it.country.contains(searchQuery, ignoreCase = true)
+                    val qEmpty = searchQuery.isBlank()
+                    val matchName = it.name.contains(searchQuery, ignoreCase = true)
+                    val matchCountry = it.country.contains(searchQuery, ignoreCase = true)
+                    qEmpty or matchName or matchCountry
                 }
 
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -2712,8 +2714,9 @@ private fun MoreSectionScreen(
 }
 
 // ============================================================================
-// ACTIVE TOURNAMENT HUB (ANIMATED DRAW, QUALIFIERS, GROUPS, KNOCKOUT BRACKET)
+// ACTIVE TOURNAMENT HUB
 // ============================================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ActiveTournamentHubScreen(
     tournament: ActiveTournamentState,
@@ -2721,7 +2724,7 @@ private fun ActiveTournamentHubScreen(
     onInspectMatch: (SimulatedMatchResult) -> Unit,
     onBack: () -> Unit
 ) {
-    var hubTab by remember { mutableStateOf(0) } // 0: Groups & Standings, 1: Knockout Bracket, 2: Draw Pots & Qualifiers
+    var hubTab by remember { mutableStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -2742,7 +2745,7 @@ private fun ActiveTournamentHubScreen(
                 if (tournament.champion != null) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "🏆 CHAMPION: ${tournament.champion.flagOrBadge} ${tournament.champion.name}  |  🥈 ${tournament.runnerUp?.name ?: "-"}  |  🥉 ${tournament.thirdPlace?.name ?: "-"}",
+                        "🏆 CHAMPION: ${tournament.champion.flagOrBadge} ${tournament.champion.name}  •  🥈 ${tournament.runnerUp?.name ?: "-"}  •  🥉 ${tournament.thirdPlace?.name ?: "-"}",
                         color = AccentGreen,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 14.sp
